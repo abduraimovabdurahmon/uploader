@@ -78,14 +78,6 @@ app.use((req, res, next) => {
   }
 });
 
-// Home route
-app.get("/", (req, res) => {
-  try {
-    return res.sendFile(path.join(__dirname, "views", "index.html"));
-  } catch (error) {
-    console.log(error);
-  }
-});
 
 // Upload route
 app.get("/upload", (req, res) => {
@@ -113,24 +105,25 @@ app.post("/upload", (req, res) => {
       }
 
       // Retrieve description from form
-      const description = req.body.description || "No description provided"; // Use default text if not provided
+      const description = req.body.description || "No description provided";
 
-      // Generate a description file
+      // Path to the description file
+      const descriptionDir = path.join(__dirname, "public", "uploads", "descriptions");
       const descriptionFilePath = path.join(
-        __dirname,
-        "public",
-        "uploads",
-        "descriptions",
+        descriptionDir,
         req.file.filename.replace(path.extname(req.file.filename), ".txt")
       );
 
-      // Create a description file with the content
+      // Ensure the descriptions directory exists
+      if (!fs.existsSync(descriptionDir)) {
+        fs.mkdirSync(descriptionDir, { recursive: true });
+      }
+
+      // Write the description file
       fs.writeFile(descriptionFilePath, description, (err) => {
         if (err) {
           console.error("Error creating description file:", err);
-          return res
-            .status(500)
-            .json({ ok: false, message: "Error creating description file." });
+          // Log the error but do not send another response since the main file upload was successful
         }
       });
 
@@ -142,14 +135,13 @@ app.post("/upload", (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res
-      .status(500)
-      .json({
-        ok: false,
-        message: "Server error occurred during file upload.",
-      });
+    res.status(500).json({
+      ok: false,
+      message: "Server error occurred during file upload.",
+    });
   }
 });
+
 
 // get files with table
 app.get("/files", (req, res) => {
