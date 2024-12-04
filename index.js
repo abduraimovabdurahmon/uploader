@@ -102,27 +102,38 @@ app.post("/upload", (req, res) => {
       if (err instanceof multer.MulterError || err) {
         return res.status(400).json({ ok: false, message: err.message });
       }
-    
+
       if (!req.file) {
         return res.status(400).json({ ok: false, message: "Error: No File Selected!" });
       }
-    
+
       const description = req.body.description || "No description provided";
+
+      // Define the directory for storing descriptions
+      const descriptionDir = path.join(__dirname, "public", "uploads", "descriptions");
+
+      // Ensure the directory exists
       ensureDirectoryExists(descriptionDir);
-    
-      // Send response early and log any file errors separately
+
+      // Define the description file path
+      const descriptionFilePath = path.join(
+        descriptionDir,
+        req.file.filename.replace(path.extname(req.file.filename), ".txt")
+      );
+
+      // Send response early to avoid duplicate responses
       res.status(200).json({
         ok: true,
         url: `${URL}/uploads/${req.file.filename}`,
       });
-    
+
+      // Write the description to the file
       fs.writeFile(descriptionFilePath, description, (writeErr) => {
         if (writeErr) {
           console.error("Error creating description file:", writeErr);
         }
       });
     });
-    
   } catch (error) {
     console.log(error);
     res.status(500).json({
