@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload</title>
+    <!-- Bootstrap CSS -->
+    <link href="/assets/bootstrap/bootstrap.css" rel="stylesheet" />
+  </head>
+  <body class="bg-light">
+    <div class="container mt-5">
+      <!-- Header with link to the uploaded files page on the right -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="card-title">Upload a File</h2>
+        <a href="/files" class="btn btn-info">View Uploaded Files</a>
+      </div>
+
+      <div class="card shadow">
+        <div class="card-header text-center bg-primary text-white">
+          <h4>Upload New File</h4>
+        </div>
+        <div class="card-body">
+          <form id="uploadForm" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="myFile" class="form-label">Choose a file:</label>
+              <input
+                type="file"
+                class="form-control"
+                id="myFile"
+                name="myFile"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Description:</label>
+              <textarea
+                class="form-control"
+                id="description"
+                name="description"
+                rows="3"
+                required
+              ></textarea>
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-success">Upload</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="alertBox" class="mt-4"></div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="/assets/bootstrap/bootstrap.js"></script>
+
+    <script>
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault(); // Prevent form from submitting the traditional way
+
+          const formData = new FormData(this); // Create a FormData object from the form
+
+          try {
+            // Send the file using fetch to the /upload endpoint
+            const response = await fetch("/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            const result = await response.json();
+
+            const alertBox = document.getElementById("alertBox");
+            alertBox.innerHTML = "";
+
+            if (result.ok) {
+              alertBox.innerHTML = `
+                <div class="alert alert-success" role="alert">
+                  Upload successful! <a href="${result.url}" target="_blank">View Uploaded File</a>
+                  <br />
+                  <strong>Link:</strong> ${result.url}
+                  <button class="btn btn-primary ml-5" onclick="navigator.clipboard.writeText('${result.url}')">Copy Link</button>
+                </div>
+              `;
+            } else {
+              alertBox.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                  ${result.message || "Upload failed!"}
+                </div>
+              `;
+            }
+          } catch (error) {
+            document.getElementById("alertBox").innerHTML = `
+              <div class="alert alert-danger" role="alert">
+                An error occurred: ${error.message}
+              </div>
+            `;
+          }
+        });
+    </script>
+  </body>
+</html>

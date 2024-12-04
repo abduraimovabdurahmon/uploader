@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uploaded Files</title>
+    <!-- Bootstrap CSS -->
+    <link href="/assets/bootstrap/bootstrap.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <!-- Header with link to the upload page -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="card-title">Uploaded Files</h2>
+        <a href="/upload" class="btn btn-primary">Upload New File</a>
+      </div>
+
+      <!-- Files Table Card -->
+      <div class="card shadow">
+        <div class="card-header text-center bg-primary text-white">
+          <h4>Uploaded Files List</h4>
+        </div>
+        <div class="card-body">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Preview</th>
+                <th>Description</th> <!-- Added Description Column -->
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fileTableBody">
+              <!-- Files will be populated here dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="/assets/bootstrap/bootstrap.js"></script>
+
+    <script>
+      // Fetch files from the server and display them in the table
+      async function fetchFiles() {
+        try {
+          const response = await fetch("/api/files");
+          const result = await response.json();
+          
+          if (result.ok) {
+            const fileTableBody = document.getElementById("fileTableBody");
+            fileTableBody.innerHTML = ""; // Clear any existing rows
+
+            result.files.forEach(file => {
+              // Create a table row
+              const row = document.createElement("tr");
+
+              // Name column
+              const nameCell = document.createElement("td");
+              nameCell.textContent = file.name;
+
+              // Preview column (only for images)
+              const previewCell = document.createElement("td");
+              const preview = document.createElement("a");
+              preview.href = file.url;
+              preview.target = "_blank"; // Open in new tab
+              
+              // Only show image preview if file is an image
+              if (
+                file.name.match(/\.(jpeg|jpg|png|gif|webp)$/i)
+              ) {
+                const img = document.createElement("img");
+                img.src = file.url;
+                img.alt = file.name;
+                img.style.maxWidth = "100px"; // Resize for table view
+                img.style.maxHeight = "100px";
+                preview.appendChild(img);
+              } else {
+                preview.textContent = "View File";
+              }
+              
+              previewCell.appendChild(preview);
+
+              // Description column
+              const descriptionCell = document.createElement("td");
+              descriptionCell.textContent = file.description || "No description"; // Display the description or a default message
+
+              // Actions column (Delete button)
+              const actionsCell = document.createElement("td");
+              const deleteButton = document.createElement("button");
+              deleteButton.classList.add("btn", "btn-danger");
+              deleteButton.textContent = "Delete";
+              
+              deleteButton.addEventListener("click", async () => {
+                try {
+                  const response = await fetch(`/api/files/${file.name}`, {
+                    method: "DELETE",
+                  });
+
+                  const result = await response.json();
+                  if (result.ok) {
+                    row.remove(); // Remove the row from the table if deletion is successful
+                    alert(result.message);
+                  } else {
+                    alert(result.message);
+                  }
+                } catch (error) {
+                  alert("Error deleting file: " + error.message);
+                }
+              });
+
+              actionsCell.appendChild(deleteButton);
+
+              // Append cells to the row
+              row.appendChild(nameCell);
+              row.appendChild(previewCell);
+              row.appendChild(descriptionCell); // Add the Description cell
+              row.appendChild(actionsCell);
+
+              // Append the row to the table
+              fileTableBody.appendChild(row);
+            });
+          } else {
+            alert("Failed to load files.");
+          }
+        } catch (error) {
+          alert("Error fetching files: " + error.message);
+        }
+      }
+
+      // Load files on page load
+      window.onload = fetchFiles;
+    </script>
+  </body>
+</html>

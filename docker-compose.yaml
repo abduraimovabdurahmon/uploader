@@ -1,0 +1,13 @@
+services:
+  web:
+    build: . # or image: jomiy/uploader
+    # image: jomiy/uploader
+    ports:
+      - "4001:3000"
+    environment:
+      - ADMIN_USERNAME=admin  # default username is 'admin'
+      - ADMIN_PASSWORD=password # default password is 'password'
+      - URL=http://localhost:4000 # IP address or domain name
+      - MAX_FILE_SIZE=500000000  # default 500000000 bytes (500MB)
+    volumes:
+      - ./public/uploads:/app/public/uploads
