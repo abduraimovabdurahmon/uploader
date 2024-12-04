@@ -40,6 +40,13 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+
+const ensureDirectoryExists = (dirPath) => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+};
+
 // Initialize Multer upload
 const upload = multer({
   storage: storage,
@@ -92,47 +99,30 @@ app.get("/upload", (req, res) => {
 app.post("/upload", (req, res) => {
   try {
     upload(req, res, (err) => {
-      if (err instanceof multer.MulterError) {
-        return res.status(400).json({ ok: false, message: err.message });
-      } else if (err) {
+      if (err instanceof multer.MulterError || err) {
         return res.status(400).json({ ok: false, message: err.message });
       }
-
+    
       if (!req.file) {
-        return res
-          .status(400)
-          .json({ ok: false, message: "Error: No File Selected!" });
+        return res.status(400).json({ ok: false, message: "Error: No File Selected!" });
       }
-
-      // Retrieve description from form
+    
       const description = req.body.description || "No description provided";
-
-      // Path to the description file
-      const descriptionDir = path.join(__dirname, "public", "uploads", "descriptions");
-      const descriptionFilePath = path.join(
-        descriptionDir,
-        req.file.filename.replace(path.extname(req.file.filename), ".txt")
-      );
-
-      // Ensure the descriptions directory exists
-      if (!fs.existsSync(descriptionDir)) {
-        fs.mkdirSync(descriptionDir, { recursive: true });
-      }
-
-      // Write the description file
-      fs.writeFile(descriptionFilePath, description, (err) => {
-        if (err) {
-          console.error("Error creating description file:", err);
-          // Log the error but do not send another response since the main file upload was successful
-        }
-      });
-
-      // Return the URL for the uploaded file
+      ensureDirectoryExists(descriptionDir);
+    
+      // Send response early and log any file errors separately
       res.status(200).json({
         ok: true,
         url: `${URL}/uploads/${req.file.filename}`,
       });
+    
+      fs.writeFile(descriptionFilePath, description, (writeErr) => {
+        if (writeErr) {
+          console.error("Error creating description file:", writeErr);
+        }
+      });
     });
+    
   } catch (error) {
     console.log(error);
     res.status(500).json({
