@@ -3,7 +3,7 @@ services:
     build: . # or image: jomiy/uploader
     # image: jomiy/uploader
     ports:
-      - "4001:3000"
+      - "4000:3000"
     environment:
       - ADMIN_USERNAME=admin  # default username is 'admin'
       - ADMIN_PASSWORD=password # default password is 'password'
